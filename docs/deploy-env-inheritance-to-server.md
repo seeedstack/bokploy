@@ -49,6 +49,9 @@ git clone -b feat/env-var-inheritance \
   git@github.com:seeedstack/bokploy.git bokploy
 cd bokploy
 
+cp apps/dokploy/.env.production.example .env.production                                                                                                                                                                                
+cp apps/dokploy/.env.production.example apps/dokploy/.env.production
+
 # 2. Build the image (tag it however you like)
 docker build -t dokploy/dokploy:envinherit -f Dockerfile .
 
