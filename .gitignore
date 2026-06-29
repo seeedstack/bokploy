@@ -44,3 +44,11 @@ yarn-error.log*
 
 
 .db
+
+CLAUDE.md
+AGENTS.md
+docs/
+.claude
+.devcontainer
+.github
+.vscode
