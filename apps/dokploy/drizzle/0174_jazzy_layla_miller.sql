@@ -1,0 +1,1 @@
+ALTER TABLE "deployment" ADD COLUMN "isProduction" boolean DEFAULT false NOT NULL;

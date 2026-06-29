@@ -7,7 +7,9 @@ import {
 	findAllDeploymentsCentralized,
 	findDeploymentById,
 	IS_CLOUD,
+	markProductionDeployment,
 	removeDeployment,
+	removeNonProductionDeployments,
 	resolveServicePath,
 	updateDeploymentStatus,
 } from "@dokploy/server";
@@ -26,6 +28,8 @@ import {
 	apiFindAllByCompose,
 	apiFindAllByServer,
 	apiFindAllByType,
+	apiMarkProductionDeployment,
+	apiRemoveNonProductionDeployments,
 	deployments,
 	server,
 } from "@/server/db/schema";
@@ -50,6 +54,39 @@ export const deploymentRouter = createTRPCRouter({
 				deployment: ["read"],
 			});
 			return await findAllDeploymentsByComposeId(input.composeId);
+		}),
+
+	markProduction: protectedProcedure
+		.input(apiMarkProductionDeployment)
+		.mutation(async ({ input, ctx }) => {
+			const deployment = await findDeploymentById(input.deploymentId);
+			const serviceId = deployment.applicationId ?? deployment.composeId;
+			if (!serviceId) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Deployment is not attached to a service",
+				});
+			}
+			await checkServicePermissionAndAccess(ctx, serviceId, {
+				deployment: ["create"],
+			});
+			return await markProductionDeployment(input.deploymentId);
+		}),
+
+	removeNonProduction: protectedProcedure
+		.input(apiRemoveNonProductionDeployments)
+		.mutation(async ({ input, ctx }) => {
+			const serviceId = input.applicationId ?? input.composeId;
+			if (!serviceId) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "applicationId or composeId is required",
+				});
+			}
+			await checkServicePermissionAndAccess(ctx, serviceId, {
+				deployment: ["create"],
+			});
+			return await removeNonProductionDeployments(input);
 		}),
 	allByServer: withPermission("deployment", "read")
 		.input(apiFindAllByServer)
