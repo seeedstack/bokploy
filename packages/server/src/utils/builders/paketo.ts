@@ -10,6 +10,12 @@ export const getPaketoCommand = (application: ApplicationNested) => {
 		env,
 		application.environment.project.env,
 		application.environment.env,
+		{
+			organizationEnv: application.environment.project.organization?.env,
+			serverEnv: application.server?.env,
+			inheritance: application.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 
 	const args = [

@@ -12,7 +12,7 @@ import { getRemoteDocker } from "../servers/remote-docker";
 
 export type MongoNested = InferResultType<
 	"mongo",
-	{ mounts: true; environment: { with: { project: true } } }
+	{ mounts: true; server: true; environment: { with: { project: { with: { organization: true } } } } }
 >;
 
 export const buildMongo = async (mongo: MongoNested) => {
@@ -108,6 +108,12 @@ ${command ?? "wait $MONGOD_PID"}`;
 		defaultMongoEnv,
 		mongo.environment.project.env,
 		mongo.environment.env,
+		{
+			organizationEnv: mongo.environment.project.organization?.env,
+			serverEnv: mongo.server?.env,
+			inheritance: mongo.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);

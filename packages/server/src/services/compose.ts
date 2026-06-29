@@ -13,7 +13,9 @@ import {
 	cloneCompose,
 	loadDockerCompose,
 	loadDockerComposeRemote,
+	readComposeFile,
 } from "@dokploy/server/utils/docker/domain";
+import { validateComposeEnv } from "@dokploy/server/utils/builders/validate-env";
 import type { ComposeSpecification } from "@dokploy/server/utils/docker/types";
 import { sendBuildErrorNotifications } from "@dokploy/server/utils/notifications/build-error";
 import { sendBuildSuccessNotifications } from "@dokploy/server/utils/notifications/build-success";
@@ -118,7 +120,7 @@ export const findComposeById = async (composeId: string) => {
 		with: {
 			environment: {
 				with: {
-					project: true,
+					project: { with: { organization: true } },
 				},
 			},
 			deployments: true,
@@ -268,6 +270,33 @@ export const deployCompose = async ({
 				await execAsyncRemote(compose.serverId, commandWithLog);
 			} else {
 				await execAsync(commandWithLog);
+			}
+		}
+
+		// Pre-deploy env validation. Best-effort: only when the compose file is
+		// readable locally. Blocks deploy when a required ${VAR:?} is unresolved.
+		const composeContent = await readComposeFile(compose).catch(() => null);
+		if (composeContent) {
+			const validation = validateComposeEnv(
+				composeContent,
+				{
+					organizationEnv: compose.environment.project.organization?.env,
+					serverEnv: compose.server?.env,
+					projectEnv: compose.environment.project.env,
+					environmentEnv: compose.environment.env,
+					serviceEnv: compose.env,
+				},
+				{
+					inheritance: compose.environment.project.enableEnvInheritance,
+					includeServer: !!compose.serverId,
+				},
+			);
+			if (validation.missingRequired.length > 0) {
+				throw new Error(
+					`Missing required environment variables: ${validation.missingRequired.join(
+						", ",
+					)}. Define them at the service, environment, project, or global scope before deploying.`,
+				);
 			}
 		}
 

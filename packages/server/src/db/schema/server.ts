@@ -49,6 +49,8 @@ export const server = pgTable("server", {
 	serverStatus: serverStatus("serverStatus").notNull().default("active"),
 	serverType: serverType("serverType").notNull().default("deploy"),
 	command: text("command").notNull().default(""),
+	// Server env scope. Injected only when deploying to this server.
+	env: text("env").notNull().default(""),
 	sshKeyId: text("sshKeyId").references(() => sshKeys.sshKeyId, {
 		onDelete: "set null",
 	}),
@@ -181,6 +183,7 @@ export const apiUpdateServer = createSchema
 	.extend({
 		command: z.string().optional(),
 		enableDockerCleanup: z.boolean().default(true),
+		env: z.string().optional(),
 	});
 
 export const apiUpdateServerBuildsConcurrency = z.object({

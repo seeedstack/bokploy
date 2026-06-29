@@ -214,8 +214,10 @@ const rollbackApplication = async (
 	serverId?: string | null,
 	fullContext?: Application & {
 		environment: {
-			project: Project;
+			env?: string | null;
+			project: Project & { organization?: { env?: string | null } | null };
 		};
+		server?: { env?: string | null } | null;
 		mounts: Mount[];
 		ports: Port[];
 		rollbackRegistry?: Registry | null;
@@ -275,6 +277,13 @@ const rollbackApplication = async (
 	const envVariables = prepareEnvironmentVariables(
 		env,
 		fullContext.environment.project.env,
+		fullContext.environment.env,
+		{
+			organizationEnv: fullContext.environment.project.organization?.env,
+			serverEnv: fullContext.server?.env,
+			inheritance: fullContext.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 
 	let rollbackImage = image;

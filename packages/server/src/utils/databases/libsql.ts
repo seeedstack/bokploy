@@ -14,7 +14,8 @@ export type LibsqlNested = InferResultType<
 	"libsql",
 	{
 		mounts: true;
-		environment: { with: { project: true } };
+		server: true;
+		environment: { with: { project: { with: { organization: true } } } };
 	}
 >;
 export const buildLibsql = async (libsql: LibsqlNested) => {
@@ -66,6 +67,12 @@ export const buildLibsql = async (libsql: LibsqlNested) => {
 		defaultLibsqlEnv,
 		libsql.environment.project.env,
 		libsql.environment.env,
+		{
+			organizationEnv: libsql.environment.project.organization?.env,
+			serverEnv: libsql.server?.env,
+			inheritance: libsql.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);

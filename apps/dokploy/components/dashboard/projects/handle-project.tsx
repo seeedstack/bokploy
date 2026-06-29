@@ -28,6 +28,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/utils/api";
 
@@ -52,6 +53,7 @@ const AddProjectSchema = z.object({
 		})
 		.transform((name) => name.trim()),
 	description: z.string().optional(),
+	enableEnvInheritance: z.boolean().optional(),
 });
 
 type AddProject = z.infer<typeof AddProjectSchema>;
@@ -86,6 +88,7 @@ export const HandleProject = ({ projectId }: Props) => {
 		defaultValues: {
 			description: "",
 			name: "",
+			enableEnvInheritance: true,
 		},
 		resolver: standardSchemaResolver(AddProjectSchema),
 	});
@@ -94,6 +97,7 @@ export const HandleProject = ({ projectId }: Props) => {
 		form.reset({
 			description: data?.description ?? "",
 			name: data?.name ?? "",
+			enableEnvInheritance: data ? (data.enableEnvInheritance ?? false) : true,
 		});
 		// Load existing tags when editing a project
 		if (data?.projectTags) {
@@ -108,6 +112,7 @@ export const HandleProject = ({ projectId }: Props) => {
 		await mutateAsync({
 			name: data.name,
 			description: data.description,
+			enableEnvInheritance: data.enableEnvInheritance,
 			projectId: projectId || "",
 		})
 			.then(async (data) => {
@@ -231,6 +236,31 @@ export const HandleProject = ({ projectId }: Props) => {
 								placeholder="Select tags..."
 							/>
 						</div>
+
+						<FormField
+							control={form.control}
+							name="enableEnvInheritance"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+									<div className="space-y-0.5">
+										<FormLabel>
+											Automatic environment variable inheritance
+										</FormLabel>
+										<p className="text-sm text-muted-foreground">
+											Services inherit Global → Project → Environment vars.
+											Service values override. Off keeps reference-only
+											behavior.
+										</p>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value ?? false}
+											onCheckedChange={field.onChange}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
 					</form>
 
 					<DialogFooter>

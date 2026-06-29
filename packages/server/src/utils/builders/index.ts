@@ -33,7 +33,8 @@ export type ApplicationNested = InferResultType<
 		buildRegistry: { columns: { password: false } };
 		rollbackRegistry: { columns: { password: false } };
 		deployments: true;
-		environment: { with: { project: true } };
+		server: true;
+		environment: { with: { project: { with: { organization: true } } } };
 	}
 >;
 
@@ -120,6 +121,12 @@ export const mechanizeDockerContainer = async (
 		env,
 		application.environment.project.env,
 		application.environment.env,
+		{
+			organizationEnv: application.environment.project.organization?.env,
+			serverEnv: application.server?.env,
+			inheritance: application.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 
 	const image = await getImageName(application);

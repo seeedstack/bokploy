@@ -24,6 +24,12 @@ export const getRailpackCommand = (application: ApplicationNested) => {
 		env,
 		application.environment.project.env,
 		application.environment.env,
+		{
+			organizationEnv: application.environment.project.organization?.env,
+			serverEnv: application.server?.env,
+			inheritance: application.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 
 	// Prepare command
@@ -75,6 +81,12 @@ export const getRailpackCommand = (application: ApplicationNested) => {
 		env,
 		application.environment.project.env,
 		application.environment.env,
+		{
+			organizationEnv: application.environment.project.organization?.env,
+			serverEnv: application.server?.env,
+			inheritance: application.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 	const exportEnvs = [];
 	for (const pair of rawEnvVariables) {

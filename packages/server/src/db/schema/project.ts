@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { nanoid } from "nanoid";
 import { z } from "zod";
@@ -22,6 +22,11 @@ export const projects = pgTable("project", {
 		.notNull()
 		.references(() => organization.id, { onDelete: "cascade" }),
 	env: text("env").notNull().default(""),
+	// Opt-in flag. Default false => existing projects keep reference-only behavior.
+	// createProject sets this true so new projects inherit automatically.
+	enableEnvInheritance: boolean("enableEnvInheritance")
+		.notNull()
+		.default(false),
 });
 
 export const projectRelations = relations(projects, ({ many, one }) => ({
@@ -43,6 +48,7 @@ export const apiCreateProject = createSchema.pick({
 	name: true,
 	description: true,
 	env: true,
+	enableEnvInheritance: true,
 });
 
 export const apiFindOneProject = z.object({

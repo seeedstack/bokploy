@@ -119,6 +119,7 @@ export const organizationRouter = createTRPCRouter({
 				organizationId: z.string(),
 				name: z.string(),
 				logo: z.string().optional(),
+				env: z.string().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -166,6 +167,7 @@ export const organizationRouter = createTRPCRouter({
 				.set({
 					name: input.name,
 					logo: input.logo,
+					...(input.env !== undefined && { env: input.env }),
 				})
 				.where(eq(organization.id, input.organizationId))
 				.returning();

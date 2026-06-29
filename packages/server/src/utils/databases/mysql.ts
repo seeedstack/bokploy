@@ -12,7 +12,7 @@ import { getRemoteDocker } from "../servers/remote-docker";
 
 export type MysqlNested = InferResultType<
 	"mysql",
-	{ mounts: true; environment: { with: { project: true } } }
+	{ mounts: true; server: true; environment: { with: { project: { with: { organization: true } } } } }
 >;
 
 export const buildMysql = async (mysql: MysqlNested) => {
@@ -66,6 +66,12 @@ export const buildMysql = async (mysql: MysqlNested) => {
 		defaultMysqlEnv,
 		mysql.environment.project.env,
 		mysql.environment.env,
+		{
+			organizationEnv: mysql.environment.project.organization?.env,
+			serverEnv: mysql.server?.env,
+			inheritance: mysql.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);

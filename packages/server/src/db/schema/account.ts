@@ -68,6 +68,8 @@ export const organization = pgTable("organization", {
 	ownerId: text("owner_id")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
+	// Global env scope. Lowest precedence in inheritance chain.
+	env: text("env").notNull().default(""),
 });
 
 export const organizationRole = pgTable(

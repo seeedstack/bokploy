@@ -26,6 +26,7 @@ export const createProject = async (
 		.values({
 			...input,
 			organizationId: organizationId,
+			enableEnvInheritance: true,
 		})
 		.returning()
 		.then((value) => value[0]);

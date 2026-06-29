@@ -61,7 +61,7 @@ export const findMariadbById = async (mariadbId: string) => {
 		with: {
 			environment: {
 				with: {
-					project: true,
+					project: { with: { organization: true } },
 				},
 			},
 			mounts: true,

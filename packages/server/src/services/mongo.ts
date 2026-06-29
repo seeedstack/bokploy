@@ -56,7 +56,7 @@ export const findMongoById = async (mongoId: string) => {
 		with: {
 			environment: {
 				with: {
-					project: true,
+					project: { with: { organization: true } },
 				},
 			},
 			mounts: true,

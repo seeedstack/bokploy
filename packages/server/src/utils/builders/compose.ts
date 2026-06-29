@@ -12,7 +12,7 @@ import {
 
 export type ComposeNested = InferResultType<
 	"compose",
-	{ environment: { with: { project: true } }; mounts: true; domains: true }
+	{ environment: { with: { project: { with: { organization: true } } } }; mounts: true; domains: true; server: true }
 >;
 
 export const getBuildComposeCommand = async (compose: ComposeNested) => {
@@ -120,6 +120,12 @@ export const getCreateEnvFileCommand = (compose: ComposeNested) => {
 		envContent,
 		compose.environment.project.env,
 		compose.environment.env,
+		{
+			organizationEnv: compose.environment.project.organization?.env,
+			serverEnv: compose.server?.env,
+			inheritance: compose.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	).join("\n");
 
 	const encodedContent = encodeBase64(envFileContent);
@@ -136,6 +142,12 @@ const getExportEnvCommand = (compose: ComposeNested) => {
 		compose.env,
 		compose.environment.project.env,
 		compose.environment.env,
+		{
+			organizationEnv: compose.environment.project.organization?.env,
+			serverEnv: compose.server?.env,
+			inheritance: compose.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 	const exports = Object.entries(envVars)
 		.map(([key, value]) => `${key}=${quote([value])}`)
