@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
+import { CodeEditor } from "@/components/shared/code-editor";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -55,6 +56,7 @@ const Schema = z.object({
 	}),
 	serverType: z.enum(["deploy", "build"]).default("deploy"),
 	enableDockerCleanup: z.boolean().default(true),
+	env: z.string().optional(),
 });
 
 type Schema = z.infer<typeof Schema>;
@@ -93,6 +95,7 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 			sshKeyId: "",
 			serverType: "deploy",
 			enableDockerCleanup: true,
+			env: "",
 		},
 		resolver: zodResolver(Schema),
 	});
@@ -107,6 +110,7 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 			sshKeyId: data?.sshKeyId || "",
 			serverType: data?.serverType || "deploy",
 			enableDockerCleanup: data?.enableDockerCleanup ?? true,
+			env: data?.env || "",
 		});
 	}, [form, form.reset, form.formState.isSubmitSuccessful, data]);
 
@@ -124,6 +128,7 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 			sshKeyId: data.sshKeyId || "",
 			serverType: data.serverType || "deploy",
 			enableDockerCleanup: data.enableDockerCleanup,
+			env: data.env || "",
 			serverId: serverId || "",
 		})
 			.then(async (_data) => {
@@ -444,6 +449,32 @@ export const HandleServers = ({ serverId, asButton = false }: Props) => {
 								</FormItem>
 							)}
 						/>
+						{serverId && (
+							<FormField
+								control={form.control}
+								name="env"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Server environment variables</FormLabel>
+										<FormDescription>
+											Injected only into workloads deployed to this server.
+											Overridden by project, environment and service values.
+										</FormDescription>
+										<FormControl>
+											<CodeEditor
+												lineWrapping
+												language="properties"
+												wrapperClassName="h-[20rem] font-mono"
+												placeholder={"REGISTRY_MIRROR=...\nREGION=eu-west-1"}
+												value={field.value ?? ""}
+												onChange={field.onChange}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						)}
 					</form>
 
 					<DialogFooter>
