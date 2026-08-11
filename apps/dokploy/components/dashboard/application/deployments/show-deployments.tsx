@@ -86,6 +86,12 @@ export const ShowDeployments = ({
 		api.deployment.killProcess.useMutation();
 	const { mutateAsync: removeDeployment } =
 		api.deployment.removeDeployment.useMutation();
+	const { mutateAsync: markProduction, isPending: isMarkingProduction } =
+		api.deployment.markProduction.useMutation();
+	const {
+		mutateAsync: removeNonProduction,
+		isPending: isRemovingNonProduction,
+	} = api.deployment.removeNonProduction.useMutation();
 
 	// Cancel deployment mutations
 	const {
@@ -167,6 +173,32 @@ export const ShowDeployments = ({
 					)}
 					{(type === "application" || type === "compose") && (
 						<CancelQueues id={id} type={type} />
+					)}
+					{(type === "application" || type === "compose") && (
+						<DialogAction
+							title="Remove non-production deployments"
+							description="Delete ALL deployments for this service except the one marked production (running ones included). This cannot be undone."
+							type="destructive"
+							onClick={async () => {
+								try {
+									const result = await removeNonProduction(
+										type === "application"
+											? { applicationId: id }
+											: { composeId: id },
+									);
+									toast.success(
+										`Removed ${result.removed} non-production deployments`,
+									);
+								} catch (_error) {
+									toast.error("Error removing deployments");
+								}
+							}}
+						>
+							<Button variant="outline" isLoading={isRemovingNonProduction}>
+								Remove non-production
+								<Trash2 className="size-4" />
+							</Button>
+						</DialogAction>
 					)}
 					{type === "application" && (
 						<ShowRollbackSettings applicationId={id}>
@@ -300,6 +332,11 @@ export const ShowDeployments = ({
 												status={deployment?.status}
 												className="size-2.5"
 											/>
+											{deployment.isProduction && (
+												<Badge className="bg-green-600 text-white hover:bg-green-600">
+													PRODUCTION
+												</Badge>
+											)}
 										</span>
 
 										<div className="flex flex-col gap-1">
@@ -404,6 +441,29 @@ export const ShowDeployments = ({
 											>
 												View
 											</Button>
+
+											{(type === "application" || type === "compose") &&
+												!deployment.isProduction && (
+													<Button
+														variant="secondary"
+														size="sm"
+														isLoading={isMarkingProduction}
+														className="w-full sm:w-auto"
+														onClick={async () => {
+															try {
+																await markProduction({
+																	deploymentId: deployment.deploymentId,
+																});
+																toast.success("Marked as production");
+															} catch (_error) {
+																toast.error("Error marking as production");
+															}
+														}}
+													>
+														<RocketIcon className="size-4" />
+														Mark production
+													</Button>
+												)}
 
 											{canDelete && (
 												<DialogAction

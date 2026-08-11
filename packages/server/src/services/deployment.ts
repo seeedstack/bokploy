@@ -643,6 +643,81 @@ export const removeDeploymentsByApplicationId = async (
 		.returning();
 };
 
+// Pin one deployment as production; unpin every other deployment of the same
+// service (application or compose). Only one production per service.
+export const markProductionDeployment = async (deploymentId: string) => {
+	const deployment = await db.query.deployments.findFirst({
+		where: eq(deployments.deploymentId, deploymentId),
+	});
+	if (!deployment) {
+		throw new TRPCError({
+			code: "NOT_FOUND",
+			message: "Deployment not found",
+		});
+	}
+
+	const scope = deployment.applicationId
+		? eq(deployments.applicationId, deployment.applicationId)
+		: deployment.composeId
+			? eq(deployments.composeId, deployment.composeId)
+			: null;
+	if (!scope) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: "Deployment is not attached to an application or compose",
+		});
+	}
+
+	await db.transaction(async (tx) => {
+		await tx.update(deployments).set({ isProduction: false }).where(scope);
+		await tx
+			.update(deployments)
+			.set({ isProduction: true })
+			.where(eq(deployments.deploymentId, deploymentId));
+	});
+
+	return { ...deployment, isProduction: true };
+};
+
+// Delete every deployment of a service except the production one (force,
+// includes running ones). Reuses removeDeployment so logs + rollbacks go too.
+export const removeNonProductionDeployments = async (input: {
+	applicationId?: string;
+	composeId?: string;
+}) => {
+	const scope = input.applicationId
+		? eq(deployments.applicationId, input.applicationId)
+		: input.composeId
+			? eq(deployments.composeId, input.composeId)
+			: null;
+	if (!scope) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: "applicationId or composeId is required",
+		});
+	}
+
+	const list = await db.query.deployments.findMany({ where: scope });
+	let removed = 0;
+	for (const deployment of list) {
+		if (deployment.isProduction) continue;
+		try {
+			if (deployment.rollbackId) {
+				await removeRollbackById(deployment.rollbackId);
+			}
+			await removeDeployment(deployment.deploymentId);
+			removed++;
+		} catch (err) {
+			console.error(
+				`Failed to remove deployment ${deployment.deploymentId}:`,
+				err,
+			);
+		}
+	}
+
+	return { removed };
+};
+
 const getDeploymentsByType = async (
 	id: string,
 	type:

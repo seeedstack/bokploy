@@ -74,6 +74,12 @@ export const getDockerCommand = (application: ApplicationNested) => {
 				env,
 				application.environment.project.env,
 				application.environment.env,
+				{
+					organizationEnv: application.environment.project.organization?.env,
+					serverEnv: application.server?.env,
+					inheritance: application.environment.project.enableEnvInheritance,
+					includeServer: true,
+				},
 			);
 		}
 

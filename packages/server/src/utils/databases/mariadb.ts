@@ -14,7 +14,7 @@ import { withResolvedVaultRefs } from "../vault";
 
 export type MariadbNested = InferResultType<
 	"mariadb",
-	{ mounts: true; environment: { with: { project: true } } }
+	{ mounts: true; server: true; environment: { with: { project: { with: { organization: true } } } } }
 >;
 export const buildMariadb = async (rawMariadb: MariadbNested) => {
 	const mariadb = await withResolvedVaultRefs(rawMariadb);
@@ -64,6 +64,12 @@ export const buildMariadb = async (rawMariadb: MariadbNested) => {
 		defaultMariadbEnv,
 		mariadb.environment.project.env,
 		mariadb.environment.env,
+		{
+			organizationEnv: mariadb.environment.project.organization?.env,
+			serverEnv: mariadb.server?.env,
+			inheritance: mariadb.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);

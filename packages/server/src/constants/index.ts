@@ -13,6 +13,17 @@ export const DOKPLOY_DOCKER_PORT = process.env.DOKPLOY_DOCKER_PORT
 
 export const CLEANUP_CRON_JOB = "50 23 * * *";
 
+export const RESERVED_ENV_KEYS = [
+	"PATH",
+	"HOME",
+	"HOST",
+	"PORT",
+	"APP_NAME",
+	"COMPOSE_PROJECT_NAME",
+	"DOCKER_CONFIG",
+	"COMPOSE_PREFIX",
+];
+
 type DockerSocketCandidate = {
 	label: string;
 	path: string;

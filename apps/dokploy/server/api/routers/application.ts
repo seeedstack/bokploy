@@ -11,6 +11,7 @@ import {
 	getContainerLogs,
 	getWebServerSettings,
 	IS_CLOUD,
+	maskResolvedVars,
 	mechanizeDockerContainer,
 	readConfig,
 	readRemoteConfig,
@@ -20,6 +21,7 @@ import {
 	removePreviewDeployment,
 	removeService,
 	removeTraefikConfig,
+	resolveResourceEnvironment,
 	startService,
 	startServiceRemote,
 	stopService,
@@ -137,6 +139,23 @@ export const applicationRouter = createTRPCRouter({
 					cause: error,
 				});
 			}
+		}),
+	// Effective (fully resolved) environment for the deploy/UI view.
+	getResolvedEnvironment: protectedProcedure
+		.input(apiFindOneApplication)
+		.query(async ({ input, ctx }) => {
+			await checkServiceAccess(ctx, input.applicationId, "read");
+			const application = await findApplicationById(input.applicationId);
+			if (
+				application.environment.project.organizationId !==
+				ctx.session.activeOrganizationId
+			) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to access this application",
+				});
+			}
+			return maskResolvedVars(resolveResourceEnvironment(application));
 		}),
 	one: protectedProcedure
 		.input(apiFindOneApplication)

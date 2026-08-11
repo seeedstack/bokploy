@@ -14,7 +14,7 @@ import { withResolvedVaultRefs } from "../vault";
 
 export type RedisNested = InferResultType<
 	"redis",
-	{ mounts: true; environment: { with: { project: true } } }
+	{ mounts: true; server: true; environment: { with: { project: { with: { organization: true } } } } }
 >;
 export const buildRedis = async (rawRedis: RedisNested) => {
 	const redis = await withResolvedVaultRefs(rawRedis);
@@ -61,6 +61,12 @@ export const buildRedis = async (rawRedis: RedisNested) => {
 		defaultRedisEnv,
 		redis.environment.project.env,
 		redis.environment.env,
+		{
+			organizationEnv: redis.environment.project.organization?.env,
+			serverEnv: redis.server?.env,
+			inheritance: redis.environment.project.enableEnvInheritance,
+			includeServer: true,
+		},
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);

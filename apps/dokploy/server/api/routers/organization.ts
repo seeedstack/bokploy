@@ -133,6 +133,7 @@ export const organizationRouter = createTRPCRouter({
 				name: z.string(),
 				logo: z.string().optional(),
 				defaultRole: z.string().min(1).nullable().optional(),
+				env: z.string().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -216,6 +217,7 @@ export const organizationRouter = createTRPCRouter({
 					...(input.defaultRole !== undefined && {
 						defaultRole: input.defaultRole,
 					}),
+					...(input.env !== undefined && { env: input.env }),
 				})
 				.where(eq(organization.id, input.organizationId))
 				.returning();

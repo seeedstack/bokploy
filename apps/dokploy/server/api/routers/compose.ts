@@ -21,16 +21,20 @@ import {
 	getWebServerSettings,
 	IS_CLOUD,
 	loadServices,
+	maskResolvedVars,
 	randomizeComposeFile,
 	randomizeIsolatedDeploymentComposeFile,
+	readComposeFile,
 	removeCompose,
 	removeComposeDirectory,
 	removeDeploymentsByComposeId,
 	removeDomainById,
+	resolveResourceEnvironment,
 	startCompose,
 	stopCompose,
 	updateCompose,
 	updateDeploymentStatus,
+	validateComposeEnv,
 } from "@dokploy/server";
 import { db } from "@dokploy/server/db";
 import { canEditDeployGitSource } from "@dokploy/server/services/git-provider";
@@ -135,6 +139,55 @@ export const composeRouter = createTRPCRouter({
 			}
 		}),
 
+	// Effective (fully resolved) environment for the deploy/UI view.
+	getResolvedEnvironment: protectedProcedure
+		.input(apiFindCompose)
+		.query(async ({ input, ctx }) => {
+			await checkServiceAccess(ctx, input.composeId, "read");
+			const compose = await findComposeById(input.composeId);
+			if (
+				compose.environment.project.organizationId !==
+				ctx.session.activeOrganizationId
+			) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to access this compose",
+				});
+			}
+			return maskResolvedVars(resolveResourceEnvironment(compose));
+		}),
+	// Pre-deploy validation: missing required ${VAR:?} block, optional warn.
+	validateEnvironment: protectedProcedure
+		.input(apiFindCompose)
+		.query(async ({ input, ctx }) => {
+			await checkServiceAccess(ctx, input.composeId, "read");
+			const compose = await findComposeById(input.composeId);
+			if (
+				compose.environment.project.organizationId !==
+				ctx.session.activeOrganizationId
+			) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "You are not authorized to access this compose",
+				});
+			}
+			const composeFile =
+				(await readComposeFile(compose).catch(() => "")) ?? "";
+			return validateComposeEnv(
+				composeFile,
+				{
+					organizationEnv: compose.environment.project.organization?.env,
+					serverEnv: compose.server?.env,
+					projectEnv: compose.environment.project.env,
+					environmentEnv: compose.environment.env,
+					serviceEnv: compose.env,
+				},
+				{
+					inheritance: compose.environment.project.enableEnvInheritance,
+					includeServer: !!compose.serverId,
+				},
+			);
+		}),
 	one: protectedProcedure
 		.input(apiFindCompose)
 		.query(async ({ input, ctx }) => {

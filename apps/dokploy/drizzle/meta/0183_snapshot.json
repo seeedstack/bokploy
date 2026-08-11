@@ -1,6 +1,6 @@
 {
-  "id": "daaa9837-09f3-452c-b5ba-232c3d6eeca2",
-  "prevId": "7ae5be64-aa73-428e-ac35-b322cdb37b68",
+  "id": "dc6b3d45-ae86-4834-abad-6c4f17eddab1",
+  "prevId": "5e30a561-5613-45cc-969f-9a5ec232f983",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -630,11 +630,24 @@
           "primaryKey": false,
           "notNull": false
         },
+        "default_role": {
+          "name": "default_role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "owner_id": {
           "name": "owner_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "env": {
+          "name": "env",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
         }
       },
       "indexes": {},
@@ -748,6 +761,130 @@
           "tableTo": "organization",
           "columnsFrom": [
             "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.passkey": {
+      "name": "passkey",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "public_key": {
+          "name": "public_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_id": {
+          "name": "credential_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "counter": {
+          "name": "counter",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "device_type": {
+          "name": "device_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "backed_up": {
+          "name": "backed_up",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transports": {
+          "name": "transports",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "aaguid": {
+          "name": "aaguid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "passkey_userId_idx": {
+          "name": "passkey_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "passkey_credentialID_idx": {
+          "name": "passkey_credentialID_idx",
+          "columns": [
+            {
+              "expression": "credential_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "passkey_user_id_user_id_fk": {
+          "name": "passkey_user_id_user_id_fk",
+          "tableFrom": "passkey",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
           ],
           "columnsTo": [
             "id"
@@ -1583,6 +1720,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "networkIds": {
+          "name": "networkIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
+        },
+        "detachDokployNetwork": {
+          "name": "detachDokployNetwork",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -2497,6 +2648,13 @@
           "notNull": true,
           "default": "''"
         },
+        "createEnvFile": {
+          "name": "createEnvFile",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
         "enableSubmodules": {
           "name": "enableSubmodules",
           "type": "boolean",
@@ -2555,6 +2713,12 @@
           "notNull": true,
           "default": "'idle'"
         },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "environmentId": {
           "name": "environmentId",
           "type": "text",
@@ -2602,6 +2766,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "serviceNetworks": {
+          "name": "serviceNetworks",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
         }
       },
       "indexes": {},
@@ -2769,6 +2940,13 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
+          "default": false
+        },
+        "isProduction": {
+          "name": "isProduction",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
           "default": false
         },
         "previewDeploymentId": {
@@ -3644,6 +3822,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "githubUrl": {
+          "name": "githubUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'https://github.com'"
+        },
         "gitProviderId": {
           "name": "gitProviderId",
           "type": "text",
@@ -3963,6 +4148,20 @@
           "notNull": true,
           "default": 1
         },
+        "networkIds": {
+          "name": "networkIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
+        },
+        "detachDokployNetwork": {
+          "name": "detachDokployNetwork",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "text",
@@ -4229,6 +4428,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "networkIds": {
+          "name": "networkIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
+        },
+        "detachDokployNetwork": {
+          "name": "detachDokployNetwork",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -4473,6 +4686,20 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
+          "default": false
+        },
+        "networkIds": {
+          "name": "networkIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
+        },
+        "detachDokployNetwork": {
+          "name": "detachDokployNetwork",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
           "default": false
         }
       },
@@ -4940,6 +5167,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "networkIds": {
+          "name": "networkIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
+        },
+        "detachDokployNetwork": {
+          "name": "detachDokployNetwork",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -4981,6 +5222,125 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.network": {
+      "name": "network",
+      "schema": "",
+      "columns": {
+        "networkId": {
+          "name": "networkId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "driver": {
+          "name": "driver",
+          "type": "networkDriver",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'bridge'"
+        },
+        "internal": {
+          "name": "internal",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "attachable": {
+          "name": "attachable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "enableIPv4": {
+          "name": "enableIPv4",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "enableIPv6": {
+          "name": "enableIPv6",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "mtu": {
+          "name": "mtu",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ipam": {
+          "name": "ipam",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::jsonb"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organizationId": {
+          "name": "organizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "serverId": {
+          "name": "serverId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "network_organizationId_organization_id_fk": {
+          "name": "network_organizationId_organization_id_fk",
+          "tableFrom": "network",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "network_serverId_server_serverId_fk": {
+          "name": "network_serverId_server_serverId_fk",
+          "tableFrom": "network",
+          "tableTo": "server",
+          "columnsFrom": [
+            "serverId"
+          ],
+          "columnsTo": [
+            "serverId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -6152,6 +6512,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "networkIds": {
+          "name": "networkIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
+        },
+        "detachDokployNetwork": {
+          "name": "detachDokployNetwork",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -6365,6 +6739,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "''"
+        },
+        "enableEnvInheritance": {
+          "name": "enableEnvInheritance",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -6645,6 +7026,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "networkIds": {
+          "name": "networkIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
+        },
+        "detachDokployNetwork": {
+          "name": "detachDokployNetwork",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -7233,6 +7628,13 @@
         },
         "command": {
           "name": "command",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "env": {
+          "name": "env",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -7896,6 +8298,99 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.vault_provider": {
+      "name": "vault_provider",
+      "schema": "",
+      "columns": {
+        "vaultProviderId": {
+          "name": "vaultProviderId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerType": {
+          "name": "providerType",
+          "type": "VaultProviderType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "config": {
+          "name": "config",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assignments": {
+          "name": "assignments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "organizationId": {
+          "name": "organizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "vault_provider_org_name_idx": {
+          "name": "vault_provider_org_name_idx",
+          "columns": [
+            {
+              "expression": "organizationId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "vault_provider_organizationId_organization_id_fk": {
+          "name": "vault_provider_organizationId_organization_id_fk",
+          "tableFrom": "vault_provider",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.volume_backup": {
       "name": "volume_backup",
       "schema": "",
@@ -8417,6 +8912,14 @@
         "libsql"
       ]
     },
+    "public.networkDriver": {
+      "name": "networkDriver",
+      "schema": "public",
+      "values": [
+        "bridge",
+        "overlay"
+      ]
+    },
     "public.notificationType": {
       "name": "notificationType",
       "schema": "public",
@@ -8535,6 +9038,17 @@
       "values": [
         "push",
         "tag"
+      ]
+    },
+    "public.VaultProviderType": {
+      "name": "VaultProviderType",
+      "schema": "public",
+      "values": [
+        "hashicorp",
+        "infisical",
+        "aws",
+        "doppler",
+        "azure"
       ]
     }
   },

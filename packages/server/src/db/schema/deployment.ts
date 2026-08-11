@@ -45,6 +45,8 @@ export const deployments = pgTable("deployment", {
 		onDelete: "cascade",
 	}),
 	isPreviewDeployment: boolean("isPreviewDeployment").default(false),
+	// Pins one deployment per service (application/compose) as production.
+	isProduction: boolean("isProduction").notNull().default(false),
 	previewDeploymentId: text("previewDeploymentId").references(
 		(): AnyPgColumn => previewDeployments.previewDeploymentId,
 		{ onDelete: "cascade" },
@@ -220,6 +222,19 @@ export const apiFindAllByCompose = z.object({
 export const apiFindAllByServer = z.object({
 	serverId: z.string().min(1),
 });
+
+export const apiMarkProductionDeployment = z.object({
+	deploymentId: z.string().min(1),
+});
+
+export const apiRemoveNonProductionDeployments = z
+	.object({
+		applicationId: z.string().optional(),
+		composeId: z.string().optional(),
+	})
+	.refine((d) => !!d.applicationId || !!d.composeId, {
+		message: "applicationId or composeId is required",
+	});
 
 export const apiFindAllByType = z.object({
 	id: z.string().min(1),
