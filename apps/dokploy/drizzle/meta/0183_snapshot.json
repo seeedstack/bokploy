@@ -1,5 +1,5 @@
 {
-  "id": "dc6b3d45-ae86-4834-abad-6c4f17eddab1",
+  "id": "2f8c958b-44a9-4640-9c16-e23439feaf7f",
   "prevId": "5e30a561-5613-45cc-969f-9a5ec232f983",
   "version": "7",
   "dialect": "postgresql",
@@ -641,13 +641,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "env": {
-          "name": "env",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
         }
       },
       "indexes": {},
@@ -2942,13 +2935,6 @@
           "notNull": false,
           "default": false
         },
-        "isProduction": {
-          "name": "isProduction",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "previewDeploymentId": {
           "name": "previewDeploymentId",
           "type": "text",
@@ -3358,6 +3344,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
         }
       },
       "indexes": {},
@@ -6739,13 +6732,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "''"
-        },
-        "enableEnvInheritance": {
-          "name": "enableEnvInheritance",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {},
@@ -7628,13 +7614,6 @@
         },
         "command": {
           "name": "command",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "env": {
-          "name": "env",
           "type": "text",
           "primaryKey": false,
           "notNull": true,

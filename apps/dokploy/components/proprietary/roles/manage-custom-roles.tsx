@@ -173,7 +173,12 @@ const RESOURCE_META: Record<string, { label: string; description: string }> = {
 	vaultProvider: {
 		label: "Secrets Providers",
 		description:
-			"Manage external secret managers (HashiCorp Vault, AWS, Azure, Infisical, Doppler) and where their secrets can be referenced",
+			"Manage external secret managers (HashiCorp Vault, AWS, Azure, Infisical, Doppler, Scaleway) and where their secrets can be referenced",
+	},
+	dnsProvider: {
+		label: "DNS Providers",
+		description:
+			"Manage DNS providers (Cloudflare, AWS Route53) and create, update, or delete their DNS records",
 	},
 };
 
@@ -323,6 +328,10 @@ const ACTION_META: Record<
 			label: "Delete",
 			description: "Remove servers from the organization",
 		},
+		terminal: {
+			label: "Terminal",
+			description: "Open an SSH root shell on remote servers",
+		},
 	},
 	registry: {
 		read: { label: "Read", description: "View configured Docker registries" },
@@ -447,6 +456,25 @@ const ACTION_META: Record<
 		},
 		delete: { label: "Delete", description: "Remove secret providers" },
 	},
+	dnsProvider: {
+		read: {
+			label: "Read",
+			description: "View configured DNS providers and their zones/records",
+		},
+		create: {
+			label: "Create",
+			description:
+				"Connect new DNS providers, test their connection, and create records",
+		},
+		update: {
+			label: "Update",
+			description: "Edit provider credentials and update existing records",
+		},
+		delete: {
+			label: "Delete",
+			description: "Remove DNS providers and delete their records",
+		},
+	},
 };
 
 /** Resources that should be hidden from the custom role editor (better-auth internals) */
@@ -545,7 +573,7 @@ const ROLE_PRESETS: {
 			envVars: ["read", "write"],
 			projectEnvVars: ["read", "write"],
 			environmentEnvVars: ["read", "write"],
-			server: ["read", "create", "delete"],
+			server: ["read", "create", "delete", "terminal"],
 			registry: ["read", "create", "delete"],
 			certificate: ["read", "create", "delete"],
 			backup: ["read", "create", "delete", "restore"],
