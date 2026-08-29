@@ -48,3 +48,63 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 3. Download the installer
 4. Run the installer and follow the prompts
 5. Start Docker Desktop from the Start menu
+
+# Updating the server build
+
+Once `merge-env-inheritance` is folded into this fork's `canary`, rebuild and
+redeploy the running Dokploy Swarm service from it.
+
+> ⚠️ This is a **fork** (`seeedstack/bokploy`). The panel's built-in **Update**
+> button pulls the *official* `dokploy/dokploy` image and will overwrite this
+> build. Do **not** use it — update by building/pushing your own image below.
+
+## First-time clone (skip if `bokploy` is already checked out on the server)
+
+```bash
+git clone -b canary git@github.com:seeedstack/bokploy.git bokploy
+cd bokploy
+```
+
+## 0. Back up the database first
+
+```bash
+docker exec "$(docker ps -q -f name=dokploy-postgres)" \
+  pg_dump -U dokploy dokploy > dokploy-backup-$(date +%F).sql
+```
+
+## On the server
+
+```bash
+cd bokploy
+git fetch origin
+git checkout canary
+git pull
+docker build -t dokploy/dokploy:envinherit -f Dockerfile .
+docker service update --image dokploy/dokploy:envinherit dokploy
+```
+
+## Verify the update
+
+```bash
+# Watch the service restart and run the migration
+docker service logs dokploy --tail 80 --follow
+```
+
+Look for the migration step running with no errors, then
+`Server Started on: http://0.0.0.0:3000`.
+
+## Staying current with upstream Dokploy fixes
+
+Add the upstream remote once:
+
+```bash
+git remote add upstream https://github.com/Dokploy/dokploy.git
+```
+
+Then, whenever you want to pull in upstream fixes:
+
+```bash
+git fetch upstream
+git merge upstream/canary
+# rebuild + redeploy using the two docker commands above
+```
