@@ -93,6 +93,21 @@ docker service logs dokploy --tail 80 --follow
 Look for the migration step running with no errors, then
 `Server Started on: http://0.0.0.0:3000`.
 
+## Rolling back a bad update
+
+If the update above breaks the panel (e.g. a migration error), Swarm keeps
+the previous task spec on hand:
+
+```bash
+docker service update --rollback dokploy
+```
+
+Once the issue is fixed and a new image is pushed, redeploy with:
+
+```bash
+docker service update --force --env-add RELEASE_TAG=canary --image seeedstack/bokploy:canary dokploy
+```
+
 ## Staying current with upstream Dokploy fixes
 
 Add the upstream remote once:
