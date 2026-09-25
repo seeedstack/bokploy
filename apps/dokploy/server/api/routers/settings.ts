@@ -562,7 +562,7 @@ export const settingsRouter = createTRPCRouter({
 				"update",
 				"--force",
 				"--image",
-				`dokploy/dokploy:${data.latestVersion}`,
+				`seeedstack/bokploy:${data.latestVersion}`,
 				"dokploy",
 			]);
 			await audit(ctx, {

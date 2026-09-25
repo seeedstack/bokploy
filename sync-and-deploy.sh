@@ -3,15 +3,17 @@ set -euo pipefail
 
 REMOTE_UPSTREAM_URL="https://github.com/Dokploy/dokploy.git"
 UPSTREAM_BRANCH="canary"
-IMAGE_TAG="dokploy/dokploy:envinherit"
+IMAGE_TAG="seeedstack/bokploy:canary"
 SERVICE_NAME="dokploy"
 
 SKIP_MERGE=false
 SKIP_PULL=false
+SYNC_ONLY=false
 for arg in "$@"; do
   case "$arg" in
     --skip-merge) SKIP_MERGE=true ;;
     --skip-pull) SKIP_PULL=true ;;
+    --sync-only) SYNC_ONLY=true ;;
   esac
 done
 
@@ -31,15 +33,17 @@ git fetch origin
 git fetch upstream
 git checkout canary
 
-PG_CONTAINER="$(docker ps -q -f name=dokploy-postgres | head -n1)"
-if [[ -z "$PG_CONTAINER" ]]; then
-  echo "No dokploy-postgres container found, aborting before touching git/deploy." >&2
-  exit 1
-fi
+if [[ "$SYNC_ONLY" == false ]]; then
+  PG_CONTAINER="$(docker ps -q -f name=dokploy-postgres | head -n1)"
+  if [[ -z "$PG_CONTAINER" ]]; then
+    echo "No dokploy-postgres container found, aborting before touching git/deploy." >&2
+    exit 1
+  fi
 
-echo "Backing up database..."
-docker exec "$PG_CONTAINER" pg_dump -U dokploy dokploy \
-  > "dokploy-backup-$(date +%F-%H%M%S).sql"
+  echo "Backing up database..."
+  docker exec "$PG_CONTAINER" pg_dump -U dokploy dokploy \
+    > "dokploy-backup-$(date +%F-%H%M%S).sql"
+fi
 
 if [[ "$SKIP_PULL" == false ]]; then
   git pull origin canary
@@ -54,6 +58,15 @@ if [[ "$SKIP_MERGE" == false ]]; then
     echo "  ./sync-and-deploy.sh --skip-pull --skip-merge"
     exit 1
   fi
+fi
+
+if [[ "$SYNC_ONLY" == true ]]; then
+  echo "Sync done, pushing canary to origin..."
+  git push origin canary
+
+  echo "Building + pushing image $IMAGE_TAG..."
+  docker buildx build --platform linux/amd64 -t "$IMAGE_TAG" --push .
+  exit 0
 fi
 
 echo "Building image $IMAGE_TAG..."
