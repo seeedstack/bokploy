@@ -60,6 +60,9 @@ if [[ "$SKIP_MERGE" == false ]]; then
   fi
 fi
 
+cp apps/dokploy/.env.production.example .env.production
+cp apps/dokploy/.env.production.example apps/dokploy/.env.production
+
 if [[ "$SYNC_ONLY" == true ]]; then
   echo "Sync done, pushing canary to origin..."
   git push origin canary
