@@ -33,6 +33,10 @@ ENV NODE_ENV=production
 
 RUN apt-get update && apt-get install -y tini curl unzip zip apache2-utils iproute2 rsync git-lfs && git lfs install && rm -rf /var/lib/apt/lists/*
 
+# Set timezone information
+ENV TZ=Asia/Kolkata
+RUN ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && echo "Asia/Kolkata" > /etc/timezone
+
 # Copy only the necessary files
 COPY --from=build /prod/dokploy/.next ./.next
 COPY --from=build /prod/dokploy/dist ./dist
