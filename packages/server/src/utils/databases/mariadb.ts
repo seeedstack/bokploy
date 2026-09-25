@@ -7,6 +7,7 @@ import {
 	generateConfigContainer,
 	generateFileMounts,
 	generateVolumeMounts,
+	getEnvExtra,
 	prepareEnvironmentVariables,
 } from "../docker/utils";
 import { getRemoteDocker } from "../servers/remote-docker";
@@ -14,7 +15,11 @@ import { withResolvedVaultRefs } from "../vault";
 
 export type MariadbNested = InferResultType<
 	"mariadb",
-	{ mounts: true; server: true; environment: { with: { project: { with: { organization: true } } } } }
+	{
+		mounts: true;
+		server: true;
+		environment: { with: { project: { with: { organization: true } } } };
+	}
 >;
 export const buildMariadb = async (rawMariadb: MariadbNested) => {
 	const mariadb = await withResolvedVaultRefs(rawMariadb);
@@ -64,12 +69,7 @@ export const buildMariadb = async (rawMariadb: MariadbNested) => {
 		defaultMariadbEnv,
 		mariadb.environment.project.env,
 		mariadb.environment.env,
-		{
-			organizationEnv: mariadb.environment.project.organization?.env,
-			serverEnv: mariadb.server?.env,
-			inheritance: mariadb.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(mariadb),
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);

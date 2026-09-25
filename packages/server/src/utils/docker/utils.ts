@@ -465,6 +465,21 @@ export interface EnvExtra {
 	base?: "env" | "buildArgs";
 }
 
+export const getEnvExtra = (application: {
+	server?: { env: string } | null;
+	environment: {
+		project: {
+			organization?: { env: string } | null;
+			enableEnvInheritance: boolean;
+		};
+	};
+}): EnvExtra => ({
+	organizationEnv: application.environment.project.organization?.env,
+	serverEnv: application.server?.env,
+	inheritance: application.environment.project.enableEnvInheritance,
+	includeServer: true,
+});
+
 export const prepareEnvironmentVariables = (
 	serviceEnv: string | null,
 	projectEnv?: string | null,

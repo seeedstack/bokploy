@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
-import { encodeBase64, prepareEnvironmentVariables } from "../docker/utils";
 import type { EnvExtra } from "../docker/utils";
+import { encodeBase64, prepareEnvironmentVariables } from "../docker/utils";
 
 export const createEnvFileCommand = (
 	directory: string,

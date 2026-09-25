@@ -6,6 +6,7 @@ import { quote } from "shell-quote";
 import { writeDomainsToCompose } from "../docker/domain";
 import {
 	encodeBase64,
+	getEnvExtra,
 	getEnvironmentVariablesObject,
 	prepareEnvironmentVariables,
 	prepareEnvironmentVariablesForFile,
@@ -14,7 +15,12 @@ import { withResolvedVaultRefs } from "../vault";
 
 export type ComposeNested = InferResultType<
 	"compose",
-	{ environment: { with: { project: { with: { organization: true } } } }; mounts: true; domains: true; server: true }
+	{
+		environment: { with: { project: { with: { organization: true } } } };
+		mounts: true;
+		domains: true;
+		server: true;
+	}
 >;
 
 export const getBuildComposeCommand = async (rawCompose: ComposeNested) => {
@@ -168,12 +174,7 @@ export const getCreateEnvFileCommand = (compose: ComposeNested) => {
 		envContent += `\nCOMPOSE_PREFIX=${compose.suffix}`;
 	}
 
-	const envExtra = {
-		organizationEnv: compose.environment.project.organization?.env,
-		serverEnv: compose.server?.env,
-		inheritance: compose.environment.project.enableEnvInheritance,
-		includeServer: true,
-	};
+	const envExtra = getEnvExtra(compose);
 
 	const envFileContent = (
 		compose.composeType === "stack"
@@ -205,12 +206,7 @@ const getExportEnvCommand = (compose: ComposeNested) => {
 		compose.env,
 		compose.environment.project.env,
 		compose.environment.env,
-		{
-			organizationEnv: compose.environment.project.organization?.env,
-			serverEnv: compose.server?.env,
-			inheritance: compose.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(compose),
 	);
 	const exports = Object.entries(envVars)
 		.map(([key, value]) => `${key}=${quote([value])}`)

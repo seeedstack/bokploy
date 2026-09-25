@@ -1,4 +1,7 @@
-import { prepareEnvironmentVariablesForShell } from "../docker/utils";
+import {
+	getEnvExtra,
+	prepareEnvironmentVariablesForShell,
+} from "../docker/utils";
 import { getBuildAppDirectory } from "../filesystem/directory";
 import type { ApplicationNested } from ".";
 
@@ -10,12 +13,7 @@ export const getPaketoCommand = (application: ApplicationNested) => {
 		env,
 		application.environment.project.env,
 		application.environment.env,
-		{
-			organizationEnv: application.environment.project.organization?.env,
-			serverEnv: application.server?.env,
-			inheritance: application.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(application),
 	);
 
 	const args = [

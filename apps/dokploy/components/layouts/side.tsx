@@ -25,7 +25,6 @@ import {
 	KeyRound,
 	LayoutGrid,
 	Loader2,
-	LogIn,
 	type LucideIcon,
 	Package,
 	Palette,
@@ -426,14 +425,6 @@ const MENU: Menu = {
 			icon: Key,
 			// Only enabled for owners
 			isEnabled: ({ auth }) => !!(auth?.role === "owner"),
-		},
-		{
-			isSingle: true,
-			title: "SSO",
-			url: "/dashboard/settings/sso",
-			icon: LogIn,
-			// Enabled for admins in both cloud and self-hosted (enterprise)
-			isEnabled: ({ permissions }) => !!permissions?.organization.update,
 		},
 		{
 			isSingle: true,

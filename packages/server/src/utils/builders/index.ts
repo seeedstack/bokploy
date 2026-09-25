@@ -9,6 +9,7 @@ import {
 	generateConfigContainer,
 	generateFileMounts,
 	generateVolumeMounts,
+	getEnvExtra,
 	prepareEnvironmentVariables,
 } from "../docker/utils";
 import { getRemoteDocker } from "../servers/remote-docker";
@@ -126,12 +127,7 @@ export const mechanizeDockerContainer = async (
 		env,
 		application.environment.project.env,
 		application.environment.env,
-		{
-			organizationEnv: application.environment.project.organization?.env,
-			serverEnv: application.server?.env,
-			inheritance: application.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(application),
 	);
 
 	const image = await getImageName(application);

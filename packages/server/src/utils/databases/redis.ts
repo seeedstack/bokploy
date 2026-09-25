@@ -7,6 +7,7 @@ import {
 	generateConfigContainer,
 	generateFileMounts,
 	generateVolumeMounts,
+	getEnvExtra,
 	prepareEnvironmentVariables,
 } from "../docker/utils";
 import { getRemoteDocker } from "../servers/remote-docker";
@@ -14,7 +15,11 @@ import { withResolvedVaultRefs } from "../vault";
 
 export type RedisNested = InferResultType<
 	"redis",
-	{ mounts: true; server: true; environment: { with: { project: { with: { organization: true } } } } }
+	{
+		mounts: true;
+		server: true;
+		environment: { with: { project: { with: { organization: true } } } };
+	}
 >;
 export const buildRedis = async (rawRedis: RedisNested) => {
 	const redis = await withResolvedVaultRefs(rawRedis);
@@ -61,12 +66,7 @@ export const buildRedis = async (rawRedis: RedisNested) => {
 		defaultRedisEnv,
 		redis.environment.project.env,
 		redis.environment.env,
-		{
-			organizationEnv: redis.environment.project.organization?.env,
-			serverEnv: redis.server?.env,
-			inheritance: redis.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(redis),
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);

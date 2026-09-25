@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { nanoid } from "nanoid";
 import { quote } from "shell-quote";
 import {
+	getEnvExtra,
 	parseEnvironmentKeyValuePair,
 	prepareEnvironmentVariables,
 	prepareEnvironmentVariablesForShell,
@@ -24,12 +25,7 @@ export const getRailpackCommand = (application: ApplicationNested) => {
 		env,
 		application.environment.project.env,
 		application.environment.env,
-		{
-			organizationEnv: application.environment.project.organization?.env,
-			serverEnv: application.server?.env,
-			inheritance: application.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(application),
 	);
 
 	// Prepare command
@@ -76,12 +72,7 @@ export const getRailpackCommand = (application: ApplicationNested) => {
 		env,
 		application.environment.project.env,
 		application.environment.env,
-		{
-			organizationEnv: application.environment.project.organization?.env,
-			serverEnv: application.server?.env,
-			inheritance: application.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(application),
 	);
 	const exportEnvs = [];
 	for (const pair of rawEnvVariables) {

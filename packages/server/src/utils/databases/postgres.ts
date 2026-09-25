@@ -7,6 +7,7 @@ import {
 	generateConfigContainer,
 	generateFileMounts,
 	generateVolumeMounts,
+	getEnvExtra,
 	prepareEnvironmentVariables,
 } from "../docker/utils";
 import { getRemoteDocker } from "../servers/remote-docker";
@@ -14,7 +15,11 @@ import { withResolvedVaultRefs } from "../vault";
 
 export type PostgresNested = InferResultType<
 	"postgres",
-	{ mounts: true; server: true; environment: { with: { project: { with: { organization: true } } } } }
+	{
+		mounts: true;
+		server: true;
+		environment: { with: { project: { with: { organization: true } } } };
+	}
 >;
 export const buildPostgres = async (rawPostgres: PostgresNested) => {
 	const postgres = await withResolvedVaultRefs(rawPostgres);
@@ -63,12 +68,7 @@ export const buildPostgres = async (rawPostgres: PostgresNested) => {
 		defaultPostgresEnv,
 		postgres.environment.project.env,
 		postgres.environment.env,
-		{
-			organizationEnv: postgres.environment.project.organization?.env,
-			serverEnv: postgres.server?.env,
-			inheritance: postgres.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(postgres),
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);

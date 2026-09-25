@@ -7,6 +7,7 @@ import {
 	generateConfigContainer,
 	generateFileMounts,
 	generateVolumeMounts,
+	getEnvExtra,
 	prepareEnvironmentVariables,
 } from "../docker/utils";
 import { getRemoteDocker } from "../servers/remote-docker";
@@ -71,12 +72,7 @@ export const buildLibsql = async (rawLibsql: LibsqlNested) => {
 		defaultLibsqlEnv,
 		libsql.environment.project.env,
 		libsql.environment.env,
-		{
-			organizationEnv: libsql.environment.project.organization?.env,
-			serverEnv: libsql.server?.env,
-			inheritance: libsql.environment.project.enableEnvInheritance,
-			includeServer: true,
-		},
+		getEnvExtra(libsql),
 	);
 	const volumesMount = generateVolumeMounts(mounts);
 	const bindsMount = generateBindMounts(mounts);
