@@ -5,9 +5,14 @@ import {
 	user,
 } from "@dokploy/server/db/schema";
 import { and, eq } from "drizzle-orm";
+import { IS_CLOUD } from "../../constants";
 import { getOrganizationOwnerId } from "./sso";
 
 export const hasValidLicense = async (organizationId: string) => {
+	// Self-hosted forks aren't sold under Dokploy's enterprise license,
+	// so there's no license server to check against.
+	if (!IS_CLOUD) return true;
+
 	const ownerId = await getOrganizationOwnerId(organizationId);
 
 	if (!ownerId) {

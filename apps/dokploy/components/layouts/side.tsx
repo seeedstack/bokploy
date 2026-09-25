@@ -434,6 +434,14 @@ const MENU: Menu = {
 			// Only enabled for owners in non-cloud environments (enterprise)
 			isEnabled: ({ auth, isCloud }) => !!(auth?.role === "owner" && !isCloud),
 		},
+		{
+			isSingle: true,
+			title: "SSO",
+			url: "/dashboard/settings/sso",
+			icon: KeyRound,
+			// Only enabled for owners
+			isEnabled: ({ auth }) => !!(auth?.role === "owner"),
+		},
 	],
 
 	help: [

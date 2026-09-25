@@ -469,7 +469,7 @@ const createBetterAuth = () =>
 						columns: { enableEnterpriseFeatures: true },
 					});
 
-					if (!dbUser?.enableEnterpriseFeatures) {
+					if (IS_CLOUD && !dbUser?.enableEnterpriseFeatures) {
 						throw new APIError("FORBIDDEN", {
 							message: "SCIM provisioning requires an enterprise license",
 						});
