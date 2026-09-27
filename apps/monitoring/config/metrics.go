@@ -20,6 +20,7 @@ type Config struct {
 			CPU    int `json:"cpu"`
 			Memory int `json:"memory"`
 		} `json:"thresholds"`
+		Volumes []VolumeWatch `json:"volumes"`
 	} `json:"server"`
 	Containers struct {
 		RefreshRate int `json:"refreshRate"`
@@ -28,6 +29,12 @@ type Config struct {
 			Exclude []string `json:"exclude"`
 		} `json:"services"`
 	} `json:"containers"`
+}
+
+// VolumeWatch is a host path to track disk usage for, with its own alert threshold.
+type VolumeWatch struct {
+	Path      string `json:"path"`
+	Threshold int    `json:"threshold"`
 }
 
 var (

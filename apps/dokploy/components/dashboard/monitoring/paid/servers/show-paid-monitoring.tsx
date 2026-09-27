@@ -12,6 +12,7 @@ import { CPUChart } from "./cpu-chart";
 import { DiskChart } from "./disk-chart";
 import { MemoryChart } from "./memory-chart";
 import { NetworkChart } from "./network-chart";
+import { VolumesChart } from "./volumes-chart";
 
 const REFRESH_INTERVALS = {
 	"5000": "5 Seconds",
@@ -30,6 +31,13 @@ const DATA_POINTS_OPTIONS = {
 	"2000": "2000 points",
 	all: "All points",
 } as const;
+
+interface VolumeMetric {
+	path: string;
+	usedPercent: number;
+	usedGB: number;
+	totalGB: number;
+}
 
 interface SystemMetrics {
 	cpu: string;
@@ -50,6 +58,7 @@ interface SystemMetrics {
 	networkIn: string;
 	networkOut: string;
 	timestamp: string;
+	volumes?: VolumeMetric[];
 }
 
 interface Props {
@@ -107,6 +116,7 @@ export const ShowPaidMonitoring = ({
 			diskUsed: Number.parseFloat(metric.diskUsed),
 			totalDisk: Number.parseFloat(metric.totalDisk),
 			uptime: metric.uptime,
+			volumes: metric.volumes,
 		}));
 
 		// @ts-ignore
@@ -269,6 +279,7 @@ export const ShowPaidMonitoring = ({
 				<MemoryChart data={historicalData} />
 				<DiskChart data={metrics} />
 				<NetworkChart data={historicalData} />
+				<VolumesChart volumes={metrics.volumes} />
 			</div>
 		</div>
 	);

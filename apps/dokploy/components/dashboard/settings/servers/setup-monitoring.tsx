@@ -1,7 +1,14 @@
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { Eye, EyeOff, LayoutDashboardIcon, RefreshCw } from "lucide-react";
+import {
+	Eye,
+	EyeOff,
+	LayoutDashboardIcon,
+	Plus,
+	RefreshCw,
+	Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { AlertBlock } from "@/components/shared/alert-block";
@@ -61,6 +68,20 @@ const Schema = z.object({
 				cpu: z.number().min(0),
 				memory: z.number().min(0),
 			}),
+			volumes: z
+				.array(
+					z.object({
+						path: z.string().min(1, { message: "Path is required" }),
+						threshold: z.number().min(0).max(100),
+					}),
+				)
+				.optional()
+				.refine(
+					(volumes) =>
+						!volumes ||
+						new Set(volumes.map((v) => v.path.trim())).size === volumes.length,
+					{ message: "Each watched path can only be listed once" },
+				),
 			cronJob: z.string().min(1, {
 				message: "Cron Job is required",
 			}),
@@ -135,6 +156,7 @@ export const SetupMonitoring = ({ serverId }: Props) => {
 						cpu: 0,
 						memory: 0,
 					},
+					volumes: [],
 					cronJob: "",
 				},
 				containers: {
@@ -146,6 +168,15 @@ export const SetupMonitoring = ({ serverId }: Props) => {
 				},
 			},
 		},
+	});
+
+	const {
+		fields: volumeFields,
+		append: appendVolume,
+		remove: removeVolume,
+	} = useFieldArray({
+		control: form.control,
+		name: "metricsConfig.server.volumes",
 	});
 
 	useEffect(() => {
@@ -164,6 +195,7 @@ export const SetupMonitoring = ({ serverId }: Props) => {
 							cpu: data?.metricsConfig?.server?.thresholds?.cpu,
 							memory: data?.metricsConfig?.server?.thresholds?.memory,
 						},
+						volumes: data?.metricsConfig?.server?.volumes || [],
 						cronJob: data?.metricsConfig?.server?.cronJob || "0 0 * * *",
 					},
 					containers: {
@@ -554,6 +586,67 @@ export const SetupMonitoring = ({ serverId }: Props) => {
 									</FormItem>
 								)}
 							/>
+
+							<div className="flex flex-col gap-4">
+								<div>
+									<FormLabel>Watched Volumes</FormLabel>
+									<FormDescription>
+										Host paths to track disk usage for, each with its own alert
+										threshold.
+									</FormDescription>
+								</div>
+								{volumeFields.map((volumeField, index) => (
+									<div
+										key={volumeField.id}
+										className="flex items-end gap-2 max-sm:flex-col max-sm:items-stretch"
+									>
+										<FormField
+											control={form.control}
+											name={`metricsConfig.server.volumes.${index}.path`}
+											render={({ field }) => (
+												<FormItem className="flex-1">
+													<FormLabel>Path</FormLabel>
+													<FormControl>
+														<Input placeholder="/mnt/data" {...field} />
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name={`metricsConfig.server.volumes.${index}.threshold`}
+											render={({ field }) => (
+												<FormItem className="w-32">
+													<FormLabel>Threshold (%)</FormLabel>
+													<FormControl>
+														<NumberInput {...field} />
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon"
+											onClick={() => removeVolume(index)}
+											title="Remove volume"
+										>
+											<Trash2 className="h-4 w-4" />
+										</Button>
+									</div>
+								))}
+								<Button
+									type="button"
+									variant="outline"
+									className="w-fit"
+									onClick={() => appendVolume({ path: "", threshold: 85 })}
+								>
+									<Plus className="h-4 w-4 mr-2" />
+									Add Volume
+								</Button>
+							</div>
 
 							<FormField
 								control={form.control}

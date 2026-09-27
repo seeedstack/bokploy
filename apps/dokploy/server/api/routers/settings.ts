@@ -464,6 +464,19 @@ export const settingsRouter = createTRPCRouter({
 				});
 			}
 
+			if (input.enforceSSO) {
+				const provider = await db.query.ssoProvider.findFirst({
+					columns: { id: true },
+				});
+				if (!provider) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message:
+							"Register at least one SSO provider before enforcing SSO — otherwise no one can sign in",
+					});
+				}
+			}
+
 			await updateWebServerSettings({
 				enforceSSO: input.enforceSSO,
 			});

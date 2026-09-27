@@ -20,9 +20,15 @@ import {
 } from "@/server/api/trpc";
 
 export const ssoRouter = createTRPCRouter({
-	// Self-hosted and cloud both allow SSO sign-in now that hasValidLicense()
-	// treats every self-hosted install as licensed.
-	showSignInWithSSO: publicProcedure.query(async () => true),
+	// hasValidLicense() now treats every self-hosted install as licensed, so
+	// the only real gate left is whether an SSO provider has been registered —
+	// otherwise this button would show on every login page and do nothing.
+	showSignInWithSSO: publicProcedure.query(async () => {
+		const provider = await db.query.ssoProvider.findFirst({
+			columns: { id: true },
+		});
+		return !!provider;
+	}),
 	enforceSSO: publicProcedure.query(async () => {
 		if (IS_CLOUD) {
 			return false;

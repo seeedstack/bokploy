@@ -23,24 +23,33 @@ import (
 )
 
 type SystemMetrics struct {
-	CPU              string  `json:"cpu"`
-	CPUModel         string  `json:"cpuModel"`
-	CPUCores         int32   `json:"cpuCores"`
-	CPUPhysicalCores int32   `json:"cpuPhysicalCores"`
-	CPUSpeed         float64 `json:"cpuSpeed"`
-	OS               string  `json:"os"`
-	Distro           string  `json:"distro"`
-	Kernel           string  `json:"kernel"`
-	Arch             string  `json:"arch"`
-	MemUsed          string  `json:"memUsed"`
-	MemUsedGB        string  `json:"memUsedGB"`
-	MemTotal         string  `json:"memTotal"`
-	Uptime           uint64  `json:"uptime"`
-	DiskUsed         string  `json:"diskUsed"`
-	TotalDisk        string  `json:"totalDisk"`
-	NetworkIn        string  `json:"networkIn"`
-	NetworkOut       string  `json:"networkOut"`
-	Timestamp        string  `json:"timestamp"`
+	CPU              string          `json:"cpu"`
+	CPUModel         string          `json:"cpuModel"`
+	CPUCores         int32           `json:"cpuCores"`
+	CPUPhysicalCores int32           `json:"cpuPhysicalCores"`
+	CPUSpeed         float64         `json:"cpuSpeed"`
+	OS               string          `json:"os"`
+	Distro           string          `json:"distro"`
+	Kernel           string          `json:"kernel"`
+	Arch             string          `json:"arch"`
+	MemUsed          string          `json:"memUsed"`
+	MemUsedGB        string          `json:"memUsedGB"`
+	MemTotal         string          `json:"memTotal"`
+	Uptime           uint64          `json:"uptime"`
+	DiskUsed         string          `json:"diskUsed"`
+	TotalDisk        string          `json:"totalDisk"`
+	NetworkIn        string          `json:"networkIn"`
+	NetworkOut       string          `json:"networkOut"`
+	Timestamp        string          `json:"timestamp"`
+	Volumes          []VolumeReading `json:"volumes"`
+}
+
+// VolumeReading is one watched path's disk usage at collection time.
+type VolumeReading struct {
+	Path        string  `json:"path"`
+	UsedPercent float64 `json:"usedPercent"`
+	UsedGB      float64 `json:"usedGB"`
+	TotalGB     float64 `json:"totalGB"`
 }
 
 type AlertPayload struct {
@@ -139,6 +148,9 @@ func GetServerMetrics() database.ServerMetric {
 		networkIn = float64(netInfo[0].BytesRecv) / 1024 / 1024
 		networkOut = float64(netInfo[0].BytesSent) / 1024 / 1024
 	}
+
+	volumesJSON := collectVolumeReadings(config.GetMetricsConfig().Server.Volumes)
+
 	return database.ServerMetric{
 		Timestamp:        time.Now().UTC().Format(time.RFC3339Nano),
 		CPU:              c[0],
@@ -158,7 +170,37 @@ func GetServerMetrics() database.ServerMetric {
 		TotalDisk:        float64(diskInfo.Total) / 1024 / 1024 / 1024,
 		NetworkIn:        networkIn,
 		NetworkOut:       networkOut,
+		VolumesJSON:      volumesJSON,
 	}
+}
+
+// collectVolumeReadings reads disk usage for each watched path. A path that
+// fails (e.g. unmounted, permission denied) is skipped rather than failing
+// the whole collection tick, matching how other stats here ignore errors.
+func collectVolumeReadings(watches []config.VolumeWatch) string {
+	if len(watches) == 0 {
+		return ""
+	}
+
+	readings := make([]VolumeReading, 0, len(watches))
+	for _, watch := range watches {
+		usage, err := disk.Usage(watch.Path)
+		if err != nil {
+			continue
+		}
+		readings = append(readings, VolumeReading{
+			Path:        watch.Path,
+			UsedPercent: usage.UsedPercent,
+			UsedGB:      float64(usage.Used) / 1024 / 1024 / 1024,
+			TotalGB:     float64(usage.Total) / 1024 / 1024 / 1024,
+		})
+	}
+
+	data, err := json.Marshal(readings)
+	if err != nil {
+		return ""
+	}
+	return string(data)
 }
 
 func ConvertToSystemMetrics(metric database.ServerMetric) SystemMetrics {
@@ -181,7 +223,19 @@ func ConvertToSystemMetrics(metric database.ServerMetric) SystemMetrics {
 		NetworkIn:        fmt.Sprintf("%.2f", metric.NetworkIn),
 		NetworkOut:       fmt.Sprintf("%.2f", metric.NetworkOut),
 		Timestamp:        metric.Timestamp,
+		Volumes:          parseVolumeReadings(metric.VolumesJSON),
 	}
+}
+
+func parseVolumeReadings(volumesJSON string) []VolumeReading {
+	if volumesJSON == "" {
+		return nil
+	}
+	var readings []VolumeReading
+	if err := json.Unmarshal([]byte(volumesJSON), &readings); err != nil {
+		return nil
+	}
+	return readings
 }
 
 func CheckThresholds(metrics database.ServerMetric) error {
@@ -197,7 +251,7 @@ func CheckThresholds(metrics database.ServerMetric) error {
 	// log.Printf("Callback URL: %s", callbackURL)
 	// log.Printf("Metrics token: %s", metricsToken)
 
-	if cpuThreshold == 0 && memThreshold == 0 {
+	if cpuThreshold == 0 && memThreshold == 0 && len(cfg.Server.Volumes) == 0 {
 		return nil
 	}
 
@@ -231,7 +285,53 @@ func CheckThresholds(metrics database.ServerMetric) error {
 		}
 	}
 
+	if err := checkVolumeThresholds(cfg, metrics, callbackURL, metricsToken); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// checkVolumeThresholds alerts once per watched path whose latest reading
+// exceeds its configured threshold.
+func checkVolumeThresholds(cfg *config.Config, metrics database.ServerMetric, callbackURL, metricsToken string) error {
+	if len(cfg.Server.Volumes) == 0 {
+		return nil
+	}
+
+	readings := parseVolumeReadings(metrics.VolumesJSON)
+	for _, watch := range cfg.Server.Volumes {
+		volumeThreshold := float64(watch.Threshold)
+		if volumeThreshold <= 0 {
+			continue
+		}
+		reading, found := findVolumeReading(readings, watch.Path)
+		if !found || reading.UsedPercent <= volumeThreshold {
+			continue
+		}
+		alert := AlertPayload{
+			ServerType: cfg.Server.ServerType,
+			Type:       "Disk",
+			Value:      reading.UsedPercent,
+			Threshold:  volumeThreshold,
+			Message:    fmt.Sprintf("Disk usage on %s (%.2f%%) exceeded threshold (%.2f%%)", watch.Path, reading.UsedPercent, volumeThreshold),
+			Timestamp:  metrics.Timestamp,
+			Token:      metricsToken,
+		}
+		if err := sendAlert(callbackURL, alert); err != nil {
+			return fmt.Errorf("failed to send disk alert for %s: %v", watch.Path, err)
+		}
+	}
+	return nil
+}
+
+func findVolumeReading(readings []VolumeReading, path string) (VolumeReading, bool) {
+	for _, reading := range readings {
+		if reading.Path == path {
+			return reading, true
+		}
+	}
+	return VolumeReading{}, false
 }
 
 func sendAlert(callbackURL string, payload AlertPayload) error {

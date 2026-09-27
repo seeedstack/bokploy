@@ -36,12 +36,18 @@ func InitDB() (*DB, error) {
 			disk_used REAL,
 			total_disk REAL,
 			network_in REAL,
-			network_out REAL
+			network_out REAL,
+			volumes_json TEXT
 		)
 	`)
 	if err != nil {
 		return nil, err
 	}
+
+	// Older installs already have server_metrics without this column;
+	// CREATE TABLE IF NOT EXISTS above is a no-op for them. SQLite has no
+	// "ADD COLUMN IF NOT EXISTS", so just ignore the duplicate-column error.
+	_, _ = db.Exec(`ALTER TABLE server_metrics ADD COLUMN volumes_json TEXT`)
 
 	return &DB{db}, nil
 }

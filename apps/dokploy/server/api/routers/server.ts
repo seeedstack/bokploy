@@ -615,6 +615,12 @@ export const serverRouter = createTRPCRouter({
 					networkIn: string;
 					networkOut: string;
 					timestamp: string;
+					volumes?: {
+						path: string;
+						usedPercent: number;
+						usedGB: number;
+						totalGB: number;
+					}[];
 				}[];
 			} catch (error) {
 				throw error;

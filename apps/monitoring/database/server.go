@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -25,6 +26,7 @@ type ServerMetric struct {
 	TotalDisk        float64 `json:"totalDisk"`
 	NetworkIn        float64 `json:"networkIn"`
 	NetworkOut       float64 `json:"networkOut"`
+	VolumesJSON      string  `json:"-"`
 }
 
 func (db *DB) SaveMetric(metric ServerMetric) error {
@@ -33,15 +35,15 @@ func (db *DB) SaveMetric(metric ServerMetric) error {
 	}
 
 	_, err := db.Exec(`
-		INSERT INTO server_metrics (timestamp, cpu, cpu_model, cpu_cores, cpu_physical_cores, cpu_speed, os, distro, kernel, arch, mem_used, mem_used_gb, mem_total, uptime, disk_used, total_disk, network_in, network_out)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, metric.Timestamp, metric.CPU, metric.CPUModel, metric.CPUCores, metric.CPUPhysicalCores, metric.CPUSpeed, metric.OS, metric.Distro, metric.Kernel, metric.Arch, metric.MemUsed, metric.MemUsedGB, metric.MemTotal, metric.Uptime, metric.DiskUsed, metric.TotalDisk, metric.NetworkIn, metric.NetworkOut)
+		INSERT INTO server_metrics (timestamp, cpu, cpu_model, cpu_cores, cpu_physical_cores, cpu_speed, os, distro, kernel, arch, mem_used, mem_used_gb, mem_total, uptime, disk_used, total_disk, network_in, network_out, volumes_json)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, metric.Timestamp, metric.CPU, metric.CPUModel, metric.CPUCores, metric.CPUPhysicalCores, metric.CPUSpeed, metric.OS, metric.Distro, metric.Kernel, metric.Arch, metric.MemUsed, metric.MemUsedGB, metric.MemTotal, metric.Uptime, metric.DiskUsed, metric.TotalDisk, metric.NetworkIn, metric.NetworkOut, metric.VolumesJSON)
 	return err
 }
 
 func (db *DB) GetMetricsInRange(start, end time.Time) ([]ServerMetric, error) {
 	rows, err := db.Query(`
-		SELECT timestamp, cpu, cpu_model, cpu_cores, cpu_physical_cores, cpu_speed, os, distro, kernel, arch, mem_used, mem_used_gb, mem_total, uptime, disk_used, total_disk, network_in, network_out
+		SELECT timestamp, cpu, cpu_model, cpu_cores, cpu_physical_cores, cpu_speed, os, distro, kernel, arch, mem_used, mem_used_gb, mem_total, uptime, disk_used, total_disk, network_in, network_out, volumes_json
 		FROM server_metrics
 		WHERE timestamp BETWEEN ? AND ?
 		ORDER BY timestamp ASC
@@ -54,10 +56,12 @@ func (db *DB) GetMetricsInRange(start, end time.Time) ([]ServerMetric, error) {
 	var metrics []ServerMetric
 	for rows.Next() {
 		var m ServerMetric
-		err := rows.Scan(&m.Timestamp, &m.CPU, &m.CPUModel, &m.CPUCores, &m.CPUPhysicalCores, &m.CPUSpeed, &m.OS, &m.Distro, &m.Kernel, &m.Arch, &m.MemUsed, &m.MemUsedGB, &m.MemTotal, &m.Uptime, &m.DiskUsed, &m.TotalDisk, &m.NetworkIn, &m.NetworkOut)
+		var volumesJSON sql.NullString
+		err := rows.Scan(&m.Timestamp, &m.CPU, &m.CPUModel, &m.CPUCores, &m.CPUPhysicalCores, &m.CPUSpeed, &m.OS, &m.Distro, &m.Kernel, &m.Arch, &m.MemUsed, &m.MemUsedGB, &m.MemTotal, &m.Uptime, &m.DiskUsed, &m.TotalDisk, &m.NetworkIn, &m.NetworkOut, &volumesJSON)
 		if err != nil {
 			return nil, err
 		}
+		m.VolumesJSON = volumesJSON.String
 		metrics = append(metrics, m)
 	}
 	return metrics, nil
@@ -66,7 +70,7 @@ func (db *DB) GetMetricsInRange(start, end time.Time) ([]ServerMetric, error) {
 func (db *DB) GetLastNMetrics(n int) ([]ServerMetric, error) {
 	rows, err := db.Query(`
 		WITH recent_metrics AS (
-			SELECT timestamp, cpu, cpu_model, cpu_cores, cpu_physical_cores, cpu_speed, os, distro, kernel, arch, mem_used, mem_used_gb, mem_total, uptime, disk_used, total_disk, network_in, network_out
+			SELECT timestamp, cpu, cpu_model, cpu_cores, cpu_physical_cores, cpu_speed, os, distro, kernel, arch, mem_used, mem_used_gb, mem_total, uptime, disk_used, total_disk, network_in, network_out, volumes_json
 			FROM server_metrics
 			ORDER BY timestamp DESC
 			LIMIT ?
@@ -82,10 +86,12 @@ func (db *DB) GetLastNMetrics(n int) ([]ServerMetric, error) {
 	var metrics []ServerMetric
 	for rows.Next() {
 		var m ServerMetric
-		err := rows.Scan(&m.Timestamp, &m.CPU, &m.CPUModel, &m.CPUCores, &m.CPUPhysicalCores, &m.CPUSpeed, &m.OS, &m.Distro, &m.Kernel, &m.Arch, &m.MemUsed, &m.MemUsedGB, &m.MemTotal, &m.Uptime, &m.DiskUsed, &m.TotalDisk, &m.NetworkIn, &m.NetworkOut)
+		var volumesJSON sql.NullString
+		err := rows.Scan(&m.Timestamp, &m.CPU, &m.CPUModel, &m.CPUCores, &m.CPUPhysicalCores, &m.CPUSpeed, &m.OS, &m.Distro, &m.Kernel, &m.Arch, &m.MemUsed, &m.MemUsedGB, &m.MemTotal, &m.Uptime, &m.DiskUsed, &m.TotalDisk, &m.NetworkIn, &m.NetworkOut, &volumesJSON)
 		if err != nil {
 			return nil, err
 		}
+		m.VolumesJSON = volumesJSON.String
 		metrics = append(metrics, m)
 	}
 	return metrics, nil
@@ -93,7 +99,7 @@ func (db *DB) GetLastNMetrics(n int) ([]ServerMetric, error) {
 
 func (db *DB) GetAllMetrics() ([]ServerMetric, error) {
 	rows, err := db.Query(`
-		SELECT timestamp, cpu, cpu_model, cpu_cores, cpu_physical_cores, cpu_speed, os, distro, kernel, arch, mem_used, mem_used_gb, mem_total, uptime, disk_used, total_disk, network_in, network_out
+		SELECT timestamp, cpu, cpu_model, cpu_cores, cpu_physical_cores, cpu_speed, os, distro, kernel, arch, mem_used, mem_used_gb, mem_total, uptime, disk_used, total_disk, network_in, network_out, volumes_json
 		FROM server_metrics
 		ORDER BY timestamp ASC
 	`)
@@ -105,10 +111,12 @@ func (db *DB) GetAllMetrics() ([]ServerMetric, error) {
 	var metrics []ServerMetric
 	for rows.Next() {
 		var m ServerMetric
-		err := rows.Scan(&m.Timestamp, &m.CPU, &m.CPUModel, &m.CPUCores, &m.CPUPhysicalCores, &m.CPUSpeed, &m.OS, &m.Distro, &m.Kernel, &m.Arch, &m.MemUsed, &m.MemUsedGB, &m.MemTotal, &m.Uptime, &m.DiskUsed, &m.TotalDisk, &m.NetworkIn, &m.NetworkOut)
+		var volumesJSON sql.NullString
+		err := rows.Scan(&m.Timestamp, &m.CPU, &m.CPUModel, &m.CPUCores, &m.CPUPhysicalCores, &m.CPUSpeed, &m.OS, &m.Distro, &m.Kernel, &m.Arch, &m.MemUsed, &m.MemUsedGB, &m.MemTotal, &m.Uptime, &m.DiskUsed, &m.TotalDisk, &m.NetworkIn, &m.NetworkOut, &volumesJSON)
 		if err != nil {
 			return nil, err
 		}
+		m.VolumesJSON = volumesJSON.String
 		metrics = append(metrics, m)
 	}
 	return metrics, nil

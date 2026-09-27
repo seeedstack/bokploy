@@ -41,6 +41,7 @@ export const webServerSettings = pgTable("webServerSettings", {
 					cpu: number;
 					memory: number;
 				};
+				volumes?: { path: string; threshold: number }[];
 			};
 			containers: {
 				refreshRate: number;
@@ -155,6 +156,21 @@ export const apiUpdateWebServerSettings = createSchema.partial().extend({
 					cpu: z.number(),
 					memory: z.number(),
 				}),
+				volumes: z
+					.array(
+						z.object({
+							path: z.string().min(1),
+							threshold: z.number().min(0).max(100),
+						}),
+					)
+					.optional()
+					.refine(
+						(volumes) =>
+							!volumes ||
+							new Set(volumes.map((v) => v.path.trim())).size ===
+								volumes.length,
+						{ message: "Each watched path can only be listed once" },
+					),
 			}),
 			containers: z.object({
 				refreshRate: z.number(),
@@ -245,6 +261,21 @@ export const apiUpdateWebServerMonitoring = z.object({
 					cpu: z.number().min(0),
 					memory: z.number().min(0),
 				}),
+				volumes: z
+					.array(
+						z.object({
+							path: z.string().min(1),
+							threshold: z.number().min(0).max(100),
+						}),
+					)
+					.optional()
+					.refine(
+						(volumes) =>
+							!volumes ||
+							new Set(volumes.map((v) => v.path.trim())).size ===
+								volumes.length,
+						{ message: "Each watched path can only be listed once" },
+					),
 			}),
 			containers: z.object({
 				refreshRate: z.number().min(2),

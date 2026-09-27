@@ -8,6 +8,8 @@ import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/
 import { ShowPaidMonitoring } from "@/components/dashboard/monitoring/paid/servers/show-paid-monitoring";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { api } from "@/utils/api";
 
@@ -16,7 +18,7 @@ const BASE_URL = "http://localhost:3001/metrics";
 const DEFAULT_TOKEN = "metrics";
 
 const Dashboard = () => {
-	const [toggleMonitoring, _setToggleMonitoring] = useLocalStorage(
+	const [toggleMonitoring, setToggleMonitoring] = useLocalStorage(
 		"monitoring-enabled",
 		false,
 	);
@@ -24,18 +26,6 @@ const Dashboard = () => {
 	const { data: monitoring, isPending } = api.user.getMetricsToken.useQuery();
 	return (
 		<div className="space-y-4 pb-10">
-			{/* <AlertBlock>
-				You are watching the <strong>Free</strong> plan.{" "}
-				<a
-					href="https://dokploy.com#pricing"
-					target="_blank"
-					className="underline"
-					rel="noreferrer"
-				>
-					Upgrade
-				</a>{" "}
-				to get more features.
-			</AlertBlock> */}
 			{isPending ? (
 				<Card className="bg-sidebar  p-2.5 rounded-xl  mx-auto  items-center">
 					<div className="rounded-xl bg-background flex shadow-md px-4 w-full min-h-[50vh] justify-center items-center text-muted-foreground">
@@ -44,15 +34,16 @@ const Dashboard = () => {
 				</Card>
 			) : (
 				<>
-					{/* {monitoring?.enabledFeatures && (
-						<div className="flex flex-row border w-fit p-4 rounded-lg items-center gap-2">
-							<Label className="text-muted-foreground">Change Monitoring</Label>
-							<Switch
-								checked={toggleMonitoring}
-								onCheckedChange={setToggleMonitoring}
-							/>
-						</div>
-					)} */}
+					<div className="flex flex-row border w-fit p-4 rounded-lg items-center gap-2">
+						<Label className="text-muted-foreground">
+							Advanced Monitoring (requires the monitoring agent to be set up in
+							Settings → Servers)
+						</Label>
+						<Switch
+							checked={toggleMonitoring}
+							onCheckedChange={setToggleMonitoring}
+						/>
+					</div>
 					{toggleMonitoring ? (
 						<Card className="bg-sidebar  p-2.5 rounded-xl  mx-auto">
 							<div className="rounded-xl bg-background shadow-md">
