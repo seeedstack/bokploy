@@ -19,7 +19,7 @@ interface EnterpriseFeatureLockedProps {
 	description?: string;
 	/** Optional custom CTA label */
 	ctaLabel?: string;
-	/** Optional CTA href (default: /dashboard/settings/license) */
+	/** Optional CTA href; CTA is hidden when omitted */
 	ctaHref?: string;
 	/** Compact variant (less padding, smaller icon) */
 	compact?: boolean;
@@ -33,7 +33,7 @@ export function EnterpriseFeatureLocked({
 	title = "Enterprise feature",
 	description = "This feature is part of Dokploy Enterprise. Add a valid license to use it.",
 	ctaLabel = "Go to License",
-	ctaHref = "/dashboard/settings/license",
+	ctaHref,
 	compact = false,
 }: EnterpriseFeatureLockedProps) {
 	return (
@@ -63,13 +63,19 @@ export function EnterpriseFeatureLocked({
 					</div>
 				</div>
 			</CardHeader>
-			<CardContent className={compact ? "pt-0" : undefined}>
-				<div className="flex justify-center">
-					<Button asChild variant="secondary" size={compact ? "sm" : "default"}>
-						<Link href={ctaHref}>{ctaLabel}</Link>
-					</Button>
-				</div>
-			</CardContent>
+			{ctaHref && (
+				<CardContent className={compact ? "pt-0" : undefined}>
+					<div className="flex justify-center">
+						<Button
+							asChild
+							variant="secondary"
+							size={compact ? "sm" : "default"}
+						>
+							<Link href={ctaHref}>{ctaLabel}</Link>
+						</Button>
+					</div>
+				</CardContent>
+			)}
 		</Card>
 	);
 }
