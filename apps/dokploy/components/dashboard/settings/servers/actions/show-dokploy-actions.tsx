@@ -11,6 +11,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/utils/api";
+import { SetupWebMonitoring } from "../../web-server/setup-web-monitoring";
 import { ShowModalLogs } from "../../web-server/show-modal-logs";
 import { TerminalModal } from "../../web-server/terminal-modal";
 import { GPUSupportModal } from "../gpu-support-modal";
@@ -59,6 +60,9 @@ export const ShowDokployActions = () => {
 						</DropdownMenuItem>
 					</ShowModalLogs>
 					<GPUSupportModal />
+					<SetupWebMonitoring>
+						<span>Setup Monitoring</span>
+					</SetupWebMonitoring>
 					<UpdateServerIp>
 						<DropdownMenuItem
 							className="cursor-pointer"
